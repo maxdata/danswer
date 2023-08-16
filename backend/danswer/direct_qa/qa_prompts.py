@@ -24,7 +24,7 @@ BASE_PROMPT = (
 SAMPLE_QUESTION = "Where is the Eiffel Tower?"
 
 SAMPLE_JSON_RESPONSE = {
-    "answer": "The Eiffel Tower is located in Paris, France.",
+    "answer": 'Based on the Wikipedia page titled "Eiffel Tower", the Eiffel Tower is located in Paris, France.',
     "quotes": [
         "The Eiffel Tower is an iconic symbol of Paris",
         "located on the Champ de Mars in France.",
@@ -154,14 +154,17 @@ class JsonChatProcessor(ChatPromptProcessor):
 
     @staticmethod
     def fill_prompt(
-        question: str, chunks: list[InferenceChunk], include_metadata: bool = False
+        question: str,
+        chunks: list[InferenceChunk],
+        include_metadata: bool = False,
+        use_chain_of_thought: bool = True,
     ) -> list[dict[str, str]]:
         metadata_prompt_section = (
             "with metadata and contents " if include_metadata else ""
         )
         intro_msg = (
             f"You are a Question Answering assistant that answers queries "
-            f"based on the provided most relevant documents.\n"
+            f"based on the provided documents.\n"
             f'Start by reading the following documents {metadata_prompt_section}and responding with "Acknowledged".'
         )
 
@@ -170,6 +173,7 @@ class JsonChatProcessor(ChatPromptProcessor):
         )
         task_msg = (
             "Now answer the next user query based on documents above and quote relevant sections.\n"
+            "When answering, you should think step by step, and verbalize your thought process.\n"
             "Respond with a JSON containing the answer and up to three most relevant quotes from the documents.\n"
             "All quotes MUST be EXACT substrings from provided documents.\n"
             "Your responses should be informative and concise.\n"
@@ -193,6 +197,11 @@ class JsonChatProcessor(ChatPromptProcessor):
         messages.append({"role": "system", "content": task_msg})
 
         messages.append({"role": "user", "content": f"{QUESTION_PAT}\n{question}\n"})
+
+        if use_chain_of_thought:
+            messages.append(
+                {"role": "user", "content": "\"Let's think step by step.\n"}
+            )
 
         return messages
 

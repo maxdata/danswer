@@ -209,6 +209,7 @@ def process_model_tokens(
     found_answer_end = False
     hold_quote = ""
     for token in tokens:
+        logger.info(token)
         model_previous = model_output
         model_output += token
 
