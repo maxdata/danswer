@@ -6,6 +6,7 @@ from sqlalchemy.orm import Session
 
 from danswer.chunking.chunk import Chunker
 from danswer.chunking.chunk import DefaultChunker
+from danswer.chunking.models import DocAwareChunk
 from danswer.connectors.models import Document
 from danswer.connectors.models import IndexAttemptMetadata
 from danswer.datastores.document_index import SplitDocumentIndex
@@ -72,7 +73,9 @@ def _indexing_pipeline(
     """Takes different pieces of the indexing pipeline and applies it to a batch of documents
     Note that the documents should already be batched at this point so that it does not inflate the
     memory requirements"""
-    chunks = list(chain(*[chunker.chunk(document=document) for document in documents]))
+    chunks: list[DocAwareChunk] = list(
+        chain(*[chunker.chunk(document=document) for document in documents])
+    )
     logger.debug(
         f"Indexing the following chunks: {[chunk.to_short_descriptor() for chunk in chunks]}"
     )
