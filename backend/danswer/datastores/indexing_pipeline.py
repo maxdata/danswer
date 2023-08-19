@@ -90,7 +90,6 @@ def _indexing_pipeline(
         index_attempt_metadata=index_attempt_metadata,
     )
 
-    logger.info(f"Indexed {len(insertion_records)} new documents")
     return len(insertion_records), len(chunks)
 
 
