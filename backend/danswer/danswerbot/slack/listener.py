@@ -40,7 +40,6 @@ from danswer.danswerbot.slack.utils import remove_danswer_bot_tag
 from danswer.danswerbot.slack.utils import respond_in_thread
 from danswer.db.embedding_model import get_current_db_embedding_model
 from danswer.db.engine import get_sqlalchemy_engine
-from danswer.dynamic_configs.interface import ConfigNotFoundError
 from danswer.one_shot_answer.models import ThreadMessage
 from danswer.search.search_nlp_models import warm_up_models
 from danswer.server.manage.models import SlackBotTokens

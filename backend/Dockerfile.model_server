@@ -15,7 +15,6 @@ WORKDIR /app
 
 # Needed for model configs and defaults
 COPY ./danswer/configs /app/danswer/configs
-COPY ./danswer/dynamic_configs /app/danswer/dynamic_configs
 
 # Utils used by model server
 COPY ./danswer/utils/logger.py /app/danswer/utils/logger.py

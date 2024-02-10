@@ -171,7 +171,8 @@ def check_number_of_tokens(
 def get_gen_ai_api_key() -> str | None:
     # first check if the key has been provided by the UI
     try:
-        return cast(str, get_dynamic_config_store().load(GEN_AI_API_KEY_STORAGE_KEY))
+        return "gen_ai_api_key"
+        # return cast(str, get_dynamic_config_store().load(GEN_AI_API_KEY_STORAGE_KEY))
     except ConfigNotFoundError:
         pass
 
