@@ -2,7 +2,7 @@ import abc
 from collections.abc import Iterator
 
 import litellm  # type:ignore
-from langchain.chat_models import ChatLiteLLM
+from langchain_community.chat_models import ChatLiteLLM
 from langchain.chat_models.base import BaseChatModel
 from langchain.schema.language_model import LanguageModelInput
 
