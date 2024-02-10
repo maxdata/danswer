@@ -39,6 +39,8 @@ from danswer.search.models import BaseFilters
 from danswer.search.models import OptionalSearchSetting
 from danswer.search.models import RetrievalDetails
 from danswer.utils.logger import setup_logger
+from danswer.utils.telemetry import optional_telemetry
+from danswer.utils.telemetry import RecordType
 
 logger_base = setup_logger()
 
@@ -213,7 +215,11 @@ def handle_message(
             action = "slack_tag_message"
         elif is_bot_dm:
             action = "slack_dm_message"
-        
+        optional_telemetry(
+            record_type=RecordType.USAGE,
+            data={"action": action},
+        )
+
         with Session(engine, expire_on_commit=False) as db_session:
             # This also handles creating the query event in postgres
             answer = get_search_answer(
