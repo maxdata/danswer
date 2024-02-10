@@ -17,8 +17,6 @@ from danswer.db.models import IndexingStatus
 from danswer.db.models import IndexModelStatus
 from danswer.server.documents.models import ConnectorCredentialPairIdentifier
 from danswer.utils.logger import setup_logger
-from danswer.utils.telemetry import optional_telemetry
-from danswer.utils.telemetry import RecordType
 
 logger = setup_logger()
 
@@ -101,8 +99,7 @@ def mark_attempt_failed(
     db_session.commit()
 
     source = index_attempt.connector.source
-    optional_telemetry(record_type=RecordType.FAILURE, data={"connector": source})
-
+    
 
 def update_docs_indexed(
     db_session: Session,

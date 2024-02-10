@@ -69,7 +69,6 @@ from danswer.server.query_and_chat.query_backend import (
 )
 from danswer.server.query_and_chat.query_backend import basic_router as query_router
 from danswer.utils.logger import setup_logger
-from danswer.utils.telemetry import optional_telemetry
 from danswer.utils.telemetry import RecordType
 from danswer.utils.variable_functionality import fetch_versioned_implementation
 
@@ -302,11 +301,7 @@ def get_application() -> FastAPI:
             if secondary_db_embedding_model
             else None,
         )
-
-        optional_telemetry(
-            record_type=RecordType.VERSION, data={"version": __version__}
-        )
-
+        
     application.add_middleware(
         CORSMiddleware,
         allow_origins=["*"],  # Change this to the list of allowed origins if needed
