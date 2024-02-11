@@ -656,7 +656,7 @@ class VespaIndex(DocumentIndex):
         logger.debug(f"Sending Vespa zip to {deploy_url}")
 
         vespa_schema_path = os.path.join(
-            os.getcwd(), "danswer", "document_index", "vespa", "app_config"
+            os.getcwd(), "backend", "document_index", "vespa", "app_config"
         )
         schema_file = os.path.join(vespa_schema_path, "schemas", "danswer_chunk.sd")
         services_file = os.path.join(vespa_schema_path, "services.xml")

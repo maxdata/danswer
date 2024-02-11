@@ -2,8 +2,8 @@ import os
 
 from backend.configs.model_configs import CHUNK_SIZE
 
-PROMPTS_YAML = "./danswer/chat/prompts.yaml"
-PERSONAS_YAML = "./danswer/chat/personas.yaml"
+PROMPTS_YAML = "./backend/chat/prompts.yaml"
+PERSONAS_YAML = "./backend/chat/personas.yaml"
 
 NUM_RETURNED_HITS = 50
 NUM_RERANKED_RESULTS = 15

@@ -142,8 +142,8 @@ def get_local_intent_model(
 ) -> "TFDistilBertForSequenceClassification":
     # NOTE: doing a local import here to avoid reduce memory usage caused by
     # processes importing this file despite not using any of this
-    from transformers import TFDistilBertForSequenceClassification  # type: ignore
-
+    from transformers import TFDistilBertForSequenceClassification  
+    
     global _INTENT_MODEL
     if _INTENT_MODEL is None or max_context_length != _INTENT_MODEL.max_seq_length:
         _INTENT_MODEL = TFDistilBertForSequenceClassification.from_pretrained(
@@ -386,10 +386,13 @@ def warm_up_models(
     if not skip_cross_encoders:
         CrossEncoderEnsembleModel().predict(query=warm_up_str, passages=[warm_up_str])
 
-    intent_tokenizer = get_intent_model_tokenizer()
-    inputs = intent_tokenizer(
-        warm_up_str, return_tensors="tf", truncation=True, padding=True
-    )
+    # https://huggingface.co/Danswer/intent-model
+    # intent_tokenizer seems not working        
+    # intent_tokenizer = get_intent_model_tokenizer()
+    # inputs = intent_tokenizer(
+    #     warm_up_str, return_tensors="tf", truncation=True, padding=True
+    # )    
     
-    model = get_local_intent_model()
-    model(inputs)
+    # not working
+    # model = get_local_intent_model()
+    # model(inputs)
