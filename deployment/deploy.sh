@@ -9,7 +9,7 @@ docker compose -f deployment/docker-compose.db.yml -p danswer-stack up -d --pull
 docker compose -f docker-compose.dev.yml -p danswer-stack up -d --pull always --force-recreate
 
 # to build from source
-docker compose -f docker-compose.dev.yml -p danswer-stack up -d --build --force-recreate 
+docker compose -f docker-compose.backend.yml -p danswer-stack up -d --build --force-recreate 
 
 # To shut down the deployment, run:
 # To stop the containers: 

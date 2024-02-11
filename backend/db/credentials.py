@@ -6,12 +6,6 @@ from sqlalchemy.orm import Session
 from sqlalchemy.sql.expression import or_
 
 from backend.auth.schemas import UserRole
-from backend.connectors.gmail.constants import (
-    GMAIL_DB_CREDENTIALS_DICT_SERVICE_ACCOUNT_KEY,
-)
-from backend.connectors.google_drive.constants import (
-    DB_CREDENTIALS_DICT_SERVICE_ACCOUNT_KEY,
-)
 from backend.db.models import Credential
 from backend.db.models import User
 from backend.server.documents.models import CredentialBase

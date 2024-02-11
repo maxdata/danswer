@@ -1,0 +1,169 @@
+version: '3'
+services:
+  api_server:
+    image: danswer/danswer-backend:latest
+    build:
+      context: ../backend
+      dockerfile: Dockerfile
+    command: >
+      /bin/sh -c "alembic upgrade head &&
+      echo \"Starting Danswer Api Server\" &&
+      uvicorn main:app --host 0.0.0.0 --port 8080"
+    depends_on:
+      - relational_db
+      - index
+    restart: always
+    ports:
+      - "8080:8080"
+    environment:
+      # Auth Settings
+      - AUTH_TYPE=${AUTH_TYPE:-disabled}
+      - SESSION_EXPIRE_TIME_SECONDS=${SESSION_EXPIRE_TIME_SECONDS:-86400}
+      - VALID_EMAIL_DOMAINS=${VALID_EMAIL_DOMAINS:-}
+      - GOOGLE_OAUTH_CLIENT_ID=${GOOGLE_OAUTH_CLIENT_ID:-}
+      - GOOGLE_OAUTH_CLIENT_SECRET=${GOOGLE_OAUTH_CLIENT_SECRET:-}
+      - REQUIRE_EMAIL_VERIFICATION=${REQUIRE_EMAIL_VERIFICATION:-}
+      - SMTP_SERVER=${SMTP_SERVER:-}  # For sending verification emails, if unspecified then defaults to 'smtp.gmail.com'
+      - SMTP_PORT=${SMTP_PORT:-587}  # For sending verification emails, if unspecified then defaults to '587'
+      - SMTP_USER=${SMTP_USER:-}
+      - SMTP_PASS=${SMTP_PASS:-}
+      - EMAIL_FROM=${EMAIL_FROM:-}
+      # Gen AI Settings
+      - GEN_AI_MODEL_PROVIDER=${GEN_AI_MODEL_PROVIDER:-openai}
+      - GEN_AI_MODEL_VERSION=${GEN_AI_MODEL_VERSION:-gpt-3.5-turbo}
+      - FAST_GEN_AI_MODEL_VERSION=${FAST_GEN_AI_MODEL_VERSION:-gpt-3.5-turbo}
+      - GEN_AI_API_KEY=${GEN_AI_API_KEY:-}
+      - GEN_AI_API_ENDPOINT=${GEN_AI_API_ENDPOINT:-}
+      - GEN_AI_API_VERSION=${GEN_AI_API_VERSION:-}
+      - GEN_AI_LLM_PROVIDER_TYPE=${GEN_AI_LLM_PROVIDER_TYPE:-}
+      - QA_TIMEOUT=${QA_TIMEOUT:-}
+      - NUM_DOCUMENT_TOKENS_FED_TO_GENERATIVE_MODEL=${NUM_DOCUMENT_TOKENS_FED_TO_GENERATIVE_MODEL:-}
+      - DISABLE_LLM_FILTER_EXTRACTION=${DISABLE_LLM_FILTER_EXTRACTION:-}
+      - DISABLE_LLM_CHUNK_FILTER=${DISABLE_LLM_CHUNK_FILTER:-}
+      - DISABLE_LLM_CHOOSE_SEARCH=${DISABLE_LLM_CHOOSE_SEARCH:-}
+      - DISABLE_GENERATIVE_AI=${DISABLE_GENERATIVE_AI:-}
+      # Query Options
+      - DOC_TIME_DECAY=${DOC_TIME_DECAY:-}  # Recency Bias for search results, decay at 1 / (1 + DOC_TIME_DECAY * x years)
+      - HYBRID_ALPHA=${HYBRID_ALPHA:-}  # Hybrid Search Alpha (0 for entirely keyword, 1 for entirely vector)
+      - EDIT_KEYWORD_QUERY=${EDIT_KEYWORD_QUERY:-}
+      - MULTILINGUAL_QUERY_EXPANSION=${MULTILINGUAL_QUERY_EXPANSION:-}
+      - QA_PROMPT_OVERRIDE=${QA_PROMPT_OVERRIDE:-}
+      # Other services
+      - POSTGRES_HOST=relational_db
+      - VESPA_HOST=index
+      - WEB_DOMAIN=${WEB_DOMAIN:-}  # For frontend redirect auth purpose
+      # Don't change the NLP model configs unless you know what you're doing
+      - DOCUMENT_ENCODER_MODEL=${DOCUMENT_ENCODER_MODEL:-}
+      - DOC_EMBEDDING_DIM=${DOC_EMBEDDING_DIM:-}
+      - NORMALIZE_EMBEDDINGS=${NORMALIZE_EMBEDDINGS:-}
+      - ASYM_QUERY_PREFIX=${ASYM_QUERY_PREFIX:-}
+      - ENABLE_RERANKING_REAL_TIME_FLOW=${ENABLE_RERANKING_REAL_TIME_FLOW:-}
+      - ENABLE_RERANKING_ASYNC_FLOW=${ENABLE_RERANKING_ASYNC_FLOW:-}
+      - MODEL_SERVER_HOST=${MODEL_SERVER_HOST:-}
+      - MODEL_SERVER_PORT=${MODEL_SERVER_PORT:-}
+      # Leave this on pretty please? Nothing sensitive is collected!
+      # https://docs.danswer.dev/more/telemetry
+      - DISABLE_TELEMETRY=${DISABLE_TELEMETRY:-}
+      - LOG_LEVEL=${LOG_LEVEL:-info}  # Set to debug to get more fine-grained logs
+      - LOG_ALL_MODEL_INTERACTIONS=${LOG_ALL_MODEL_INTERACTIONS:-}  # Log all of the prompts to the LLM
+      # If set to `true` will enable additional logs about Vespa query performance
+      # (time spent on finding the right docs + time spent fetching summaries from disk)
+      - LOG_VESPA_TIMING_INFORMATION=${LOG_VESPA_TIMING_INFORMATION:-}
+    volumes:
+      - local_dynamic_storage:/home/storage
+      - file_connector_tmp_storage:/home/file_connector_storage
+      - model_cache_torch:/root/.cache/torch/
+      - model_cache_nltk:/root/nltk_data/
+      - model_cache_huggingface:/root/.cache/huggingface/
+    logging:
+      driver: json-file
+      options:
+        max-size: "50m"
+        max-file: "6"
+  background:
+    image: danswer/danswer-backend:latest
+    build:
+      context: ../backend
+      dockerfile: Dockerfile
+    command: /usr/bin/supervisord
+    depends_on:
+      - relational_db
+      - index
+    restart: always
+    environment:
+      # Gen AI Settings (Needed by DanswerBot)
+      - GEN_AI_MODEL_PROVIDER=${GEN_AI_MODEL_PROVIDER:-openai}
+      - GEN_AI_MODEL_VERSION=${GEN_AI_MODEL_VERSION:-gpt-3.5-turbo}
+      - FAST_GEN_AI_MODEL_VERSION=${FAST_GEN_AI_MODEL_VERSION:-gpt-3.5-turbo}
+      - GEN_AI_API_KEY=${GEN_AI_API_KEY:-}
+      - GEN_AI_API_ENDPOINT=${GEN_AI_API_ENDPOINT:-}
+      - GEN_AI_API_VERSION=${GEN_AI_API_VERSION:-}
+      - GEN_AI_LLM_PROVIDER_TYPE=${GEN_AI_LLM_PROVIDER_TYPE:-}
+      - QA_TIMEOUT=${QA_TIMEOUT:-}
+      - NUM_DOCUMENT_TOKENS_FED_TO_GENERATIVE_MODEL=${NUM_DOCUMENT_TOKENS_FED_TO_GENERATIVE_MODEL:-}
+      - DISABLE_LLM_FILTER_EXTRACTION=${DISABLE_LLM_FILTER_EXTRACTION:-}
+      - DISABLE_LLM_CHUNK_FILTER=${DISABLE_LLM_CHUNK_FILTER:-}
+      - DISABLE_LLM_CHOOSE_SEARCH=${DISABLE_LLM_CHOOSE_SEARCH:-}
+      - DISABLE_GENERATIVE_AI=${DISABLE_GENERATIVE_AI:-}
+      # Query Options
+      - DOC_TIME_DECAY=${DOC_TIME_DECAY:-}  # Recency Bias for search results, decay at 1 / (1 + DOC_TIME_DECAY * x years)
+      - HYBRID_ALPHA=${HYBRID_ALPHA:-}  # Hybrid Search Alpha (0 for entirely keyword, 1 for entirely vector)
+      - EDIT_KEYWORD_QUERY=${EDIT_KEYWORD_QUERY:-}
+      - MULTILINGUAL_QUERY_EXPANSION=${MULTILINGUAL_QUERY_EXPANSION:-}
+      - QA_PROMPT_OVERRIDE=${QA_PROMPT_OVERRIDE:-}
+      # Other Services
+      - POSTGRES_HOST=relational_db
+      - VESPA_HOST=index
+      - WEB_DOMAIN=${WEB_DOMAIN:-}  # For frontend redirect auth purpose for OAuth2 connectors
+      # Don't change the NLP model configs unless you know what you're doing
+      - DOCUMENT_ENCODER_MODEL=${DOCUMENT_ENCODER_MODEL:-}
+      - DOC_EMBEDDING_DIM=${DOC_EMBEDDING_DIM:-}
+      - NORMALIZE_EMBEDDINGS=${NORMALIZE_EMBEDDINGS:-}
+      - ASYM_QUERY_PREFIX=${ASYM_QUERY_PREFIX:-}  # Needed by DanswerBot
+      - ASYM_PASSAGE_PREFIX=${ASYM_PASSAGE_PREFIX:-}
+      - MODEL_SERVER_HOST=${MODEL_SERVER_HOST:-}
+      - MODEL_SERVER_PORT=${MODEL_SERVER_PORT:-}
+      - INDEXING_MODEL_SERVER_HOST=${INDEXING_MODEL_SERVER_HOST:-}
+      - MIN_THREADS_ML_MODELS=${MIN_THREADS_ML_MODELS:-}
+      # Indexing Configs
+      - NUM_INDEXING_WORKERS=${NUM_INDEXING_WORKERS:-}
+      - DASK_JOB_CLIENT_ENABLED=${DASK_JOB_CLIENT_ENABLED:-}
+      - CONTINUE_ON_CONNECTOR_FAILURE=${CONTINUE_ON_CONNECTOR_FAILURE:-}
+      - EXPERIMENTAL_CHECKPOINTING_ENABLED=${EXPERIMENTAL_CHECKPOINTING_ENABLED:-}
+      - CONFLUENCE_CONNECTOR_LABELS_TO_SKIP=${CONFLUENCE_CONNECTOR_LABELS_TO_SKIP:-}
+      - GONG_CONNECTOR_START_TIME=${GONG_CONNECTOR_START_TIME:-}
+      - NOTION_CONNECTOR_ENABLE_RECURSIVE_PAGE_LOOKUP=${NOTION_CONNECTOR_ENABLE_RECURSIVE_PAGE_LOOKUP:-}
+      - GITHUB_CONNECTOR_BASE_URL=${GITHUB_CONNECTOR_BASE_URL:-}
+      # Danswer SlackBot Configs
+      - DANSWER_BOT_SLACK_APP_TOKEN=${DANSWER_BOT_SLACK_APP_TOKEN:-}
+      - DANSWER_BOT_SLACK_BOT_TOKEN=${DANSWER_BOT_SLACK_BOT_TOKEN:-}
+      - DANSWER_BOT_DISABLE_DOCS_ONLY_ANSWER=${DANSWER_BOT_DISABLE_DOCS_ONLY_ANSWER:-}
+      - DANSWER_BOT_DISPLAY_ERROR_MSGS=${DANSWER_BOT_DISPLAY_ERROR_MSGS:-}
+      - DANSWER_BOT_RESPOND_EVERY_CHANNEL=${DANSWER_BOT_RESPOND_EVERY_CHANNEL:-}
+      - DANSWER_BOT_DISABLE_COT=${DANSWER_BOT_DISABLE_COT:-}  # Currently unused
+      - NOTIFY_SLACKBOT_NO_ANSWER=${NOTIFY_SLACKBOT_NO_ANSWER:-}
+      - DANSWER_BOT_MAX_QPM=${DANSWER_BOT_MAX_QPM:-}
+      - DANSWER_BOT_MAX_WAIT_TIME=${DANSWER_BOT_MAX_WAIT_TIME:-}
+      - DISABLE_TELEMETRY=${DISABLE_TELEMETRY:-}
+      - LOG_LEVEL=${LOG_LEVEL:-info}  # Set to debug to get more fine-grained logs
+      - LOG_ALL_MODEL_INTERACTIONS=${LOG_ALL_MODEL_INTERACTIONS:-}  # Log all of the prompts to the LLM
+      - LOG_VESPA_TIMING_INFORMATION=${LOG_VESPA_TIMING_INFORMATION:-}
+    volumes:
+      - local_dynamic_storage:/home/storage
+      - file_connector_tmp_storage:/home/file_connector_storage
+      - model_cache_torch:/root/.cache/torch/
+      - model_cache_nltk:/root/nltk_data/
+      - model_cache_huggingface:/root/.cache/huggingface/
+    logging:
+      driver: json-file
+      options:
+        max-size: "50m"
+        max-file: "6"
+volumes:
+  local_dynamic_storage:
+  file_connector_tmp_storage:  # used to store files uploaded by the user temporarily while we are indexing them
+  db_volume:
+  vespa_volume:
+  model_cache_torch:
+  model_cache_nltk:
+  model_cache_huggingface:

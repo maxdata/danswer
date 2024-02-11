@@ -2,14 +2,9 @@ import logging
 import time
 from datetime import datetime
 
-import dask
 import torch
-from dask.distributed import Client
-from dask.distributed import Future
-from distributed import LocalCluster
 from sqlalchemy.orm import Session
 
-from backend.background.indexing.dask_utils import ResourceLogger
 from backend.background.indexing.job_client import SimpleJob
 from backend.background.indexing.job_client import SimpleJobClient
 from backend.background.indexing.run_indexing import run_indexing_entrypoint
@@ -43,10 +38,6 @@ from backend.db.models import IndexModelStatus
 from backend.utils.logger import setup_logger
 
 logger = setup_logger()
-
-# If the indexing dies, it's most likely due to resource constraints,
-# restarting just delays the eventual failure, not useful to the user
-dask.config.set({"distributed.scheduler.allowed-failures": 0})
 
 _UNEXPECTED_STATE_FAILURE_REASON = (
     "Stopped mid run, likely due to the background process being killed"
@@ -132,7 +123,7 @@ def _mark_run_failed(
 """Main funcs"""
 
 
-def create_indexing_jobs(existing_jobs: dict[int, Future | SimpleJob]) -> None:
+def create_indexing_jobs(existing_jobs: dict[int, SimpleJob]) -> None:
     """Creates new indexing jobs for each connector / credential pair which is:
     1. Enabled
     2. `refresh_frequency` time has passed since the last indexing run for this pair
@@ -197,9 +188,9 @@ def create_indexing_jobs(existing_jobs: dict[int, Future | SimpleJob]) -> None:
 
 
 def cleanup_indexing_jobs(
-    existing_jobs: dict[int, Future | SimpleJob],
+    existing_jobs: dict[int, SimpleJob],
     timeout_hours: int = CLEANUP_INDEXING_JOBS_TIMEOUT,
-) -> dict[int, Future | SimpleJob]:
+) -> dict[int, SimpleJob]:
     existing_jobs_copy = existing_jobs.copy()
 
     # clean up completed jobs
@@ -272,10 +263,10 @@ def cleanup_indexing_jobs(
 
 
 def kickoff_indexing_jobs(
-    existing_jobs: dict[int, Future | SimpleJob],
-    client: Client | SimpleJobClient,
-    secondary_client: Client | SimpleJobClient,
-) -> dict[int, Future | SimpleJob]:
+    existing_jobs: dict[int, SimpleJob],
+    client: SimpleJobClient,
+    secondary_client: SimpleJobClient,
+) -> dict[int, SimpleJob]:
     existing_jobs_copy = existing_jobs.copy()
     engine = get_sqlalchemy_engine()
 
@@ -380,32 +371,12 @@ def check_index_swap(db_session: Session) -> None:
 
 
 def update_loop(delay: int = 10, num_workers: int = NUM_INDEXING_WORKERS) -> None:
-    client_primary: Client | SimpleJobClient
-    client_secondary: Client | SimpleJobClient
-    if DASK_JOB_CLIENT_ENABLED:
-        cluster_primary = LocalCluster(
-            n_workers=num_workers,
-            threads_per_worker=1,
-            # there are warning about high memory usage + "Event loop unresponsive"
-            # which are not relevant to us since our workers are expected to use a
-            # lot of memory + involve CPU intensive tasks that will not relinquish
-            # the event loop
-            silence_logs=logging.ERROR,
-        )
-        cluster_secondary = LocalCluster(
-            n_workers=num_workers,
-            threads_per_worker=1,
-            silence_logs=logging.ERROR,
-        )
-        client_primary = Client(cluster_primary)
-        client_secondary = Client(cluster_secondary)
-        if LOG_LEVEL.lower() == "debug":
-            client_primary.register_worker_plugin(ResourceLogger())
-    else:
-        client_primary = SimpleJobClient(n_workers=num_workers)
-        client_secondary = SimpleJobClient(n_workers=num_workers)
+    client_primary: SimpleJobClient
+    client_secondary: SimpleJobClient    
+    client_primary = SimpleJobClient(n_workers=num_workers)
+    client_secondary = SimpleJobClient(n_workers=num_workers)
 
-    existing_jobs: dict[int, Future | SimpleJob] = {}
+    existing_jobs: dict[int, SimpleJob] = {}
     engine = get_sqlalchemy_engine()
 
     with Session(engine) as db_session:
@@ -443,11 +414,11 @@ def update_loop(delay: int = 10, num_workers: int = NUM_INDEXING_WORKERS) -> Non
 
 
 def update__main() -> None:
+    # TODO: Move to ECS scaling instead of Dask
     # needed for CUDA to work with multiprocessing
     # NOTE: needs to be done on application startup
     # before any other torch code has been run
-    if not DASK_JOB_CLIENT_ENABLED:
-        torch.multiprocessing.set_start_method("spawn")
+    torch.multiprocessing.set_start_method("spawn")
 
     logger.info("Starting Indexing Loop")
     update_loop()
