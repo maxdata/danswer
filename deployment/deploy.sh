@@ -1,3 +1,10 @@
+# To completely remove Danswer run:
+# WARNING, this will also erase your indexed data and users
+docker compose -f deployment/docker-compose.db.yml -p danswer-stack down -v
+
+# db only
+docker compose -f deployment/docker-compose.db.yml -p danswer-stack up -d --pull always --force-recreate
+
 # build from pull
 docker compose -f docker-compose.dev.yml -p danswer-stack up -d --pull always --force-recreate
 
@@ -9,6 +16,7 @@ docker compose -f docker-compose.dev.yml -p danswer-stack up -d --build --force-
 docker compose -f docker-compose.dev.yml -p danswer-stack stop
 # To delete the containers: 
 docker compose -f docker-compose.dev.yml -p danswer-stack down
+
 # To completely remove Danswer run:
 # WARNING, this will also erase your indexed data and users
-docker compose -f docker-compose.dev.yml -p danswer-stack down -v
+docker compose -f deployment/docker-compose.db.yml -p danswer-stack down -v

@@ -19,7 +19,7 @@ export function SwitchModelModal({
         </h2>
         <Text>
           We&apos;ve detected you are using our old default embedding model (
-          <i>{embeddingModelName || "thenlper/gte-small"}</i>). We believe that
+          <i>{embeddingModelName || "BAAI/bge-small-en-v1.5"}</i>). We believe that
           search performance can be dramatically improved by a simple model
           switch.
           <br />

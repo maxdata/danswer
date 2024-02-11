@@ -1,0 +1,34 @@
+version: '3'
+services:
+  relational_db:
+    image: postgres:15.2-alpine
+    restart: always
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER:-postgres}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-password}
+    ports:
+      - "5432:5432"
+    volumes:
+      - db_volume:/var/lib/postgresql/data
+  # This container name cannot have an underscore in it due to Vespa expectations of the URL
+  index:
+    image: vespaengine/vespa:8.277.17
+    restart: always
+    ports:
+      - "19071:19071"
+      - "8081:8081"
+    volumes:
+      - vespa_volume:/opt/vespa/var
+    logging:
+      driver: json-file
+      options:
+        max-size: "50m"
+        max-file: "6"    
+volumes:
+  local_dynamic_storage:
+  file_connector_tmp_storage:  # used to store files uploaded by the user temporarily while we are indexing them
+  db_volume:
+  vespa_volume:
+  model_cache_torch:
+  model_cache_nltk:
+  model_cache_huggingface:

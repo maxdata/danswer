@@ -60,7 +60,7 @@ export const AVAILABLE_MODELS: FullEmbeddingModelDescriptor[] = [
   },
 ];
 
-export const INVALID_OLD_MODEL = "thenlper/gte-small";
+export const INVALID_OLD_MODEL = "BAAI/bge-small-en-v1.5";    
 
 export function checkModelNameIsValid(modelName: string | undefined | null) {
   if (!modelName) {
