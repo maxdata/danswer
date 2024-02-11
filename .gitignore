@@ -6,4 +6,4 @@
 /deployment/data/nginx/app.conf
 .vscode/launch.json
 *.pyc
-*.pyc
+__pycache__
