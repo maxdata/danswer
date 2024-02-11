@@ -390,4 +390,6 @@ def warm_up_models(
     inputs = intent_tokenizer(
         warm_up_str, return_tensors="tf", truncation=True, padding=True
     )
-    get_local_intent_model()(inputs)
+    
+    model = get_local_intent_model()
+    model(inputs)
