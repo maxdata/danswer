@@ -8,10 +8,10 @@ from backend.configs.model_configs import DOC_EMBEDDING_CONTEXT_SIZE
 from backend.search.search_nlp_models import get_local_reranking_model_ensemble
 from backend.utils.logger import setup_logger
 from backend.utils.timing import log_function_time
-from shared_models.model_server_models import EmbedRequest
-from shared_models.model_server_models import EmbedResponse
-from shared_models.model_server_models import RerankRequest
-from shared_models.model_server_models import RerankResponse
+from backend.shared_models.model_server_models import EmbedRequest
+from backend.shared_models.model_server_models import EmbedResponse
+from backend.shared_models.model_server_models import RerankRequest
+from backend.shared_models.model_server_models import RerankResponse
 
 if TYPE_CHECKING:
     from sentence_transformers import SentenceTransformer  # type: ignore

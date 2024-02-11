@@ -4,8 +4,8 @@ from fastapi import APIRouter
 from backend.search.search_nlp_models import get_intent_model_tokenizer
 from backend.search.search_nlp_models import get_local_intent_model
 from backend.utils.timing import log_function_time
-from shared_models.model_server_models import IntentRequest
-from shared_models.model_server_models import IntentResponse
+from backend.shared_models.model_server_models import IntentRequest
+from backend.shared_models.model_server_models import IntentResponse
 
 router = APIRouter(prefix="/custom")
 

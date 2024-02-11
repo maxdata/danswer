@@ -31,7 +31,7 @@ def get_access_for_documents(
 ) -> dict[str, DocumentAccess]:
     """Fetches all access information for the given documents."""
     versioned_get_access_for_documents_fn = fetch_versioned_implementation(
-        "danswer.access.access", "_get_access_for_documents"
+        "backend.access.access", "_get_access_for_documents"
     )
     return versioned_get_access_for_documents_fn(
         document_ids, db_session, cc_pair_to_delete
@@ -57,6 +57,6 @@ def _get_acl_for_user(user: User | None, db_session: Session) -> set[str]:
 
 def get_acl_for_user(user: User | None, db_session: Session | None = None) -> set[str]:
     versioned_acl_for_user_fn = fetch_versioned_implementation(
-        "danswer.access.access", "_get_acl_for_user"
+        "backend.access.access", "_get_acl_for_user"
     )
     return versioned_acl_for_user_fn(user, db_session)  # type: ignore

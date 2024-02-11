@@ -95,7 +95,7 @@ def test_email_to_document() -> None:
 
 
 def test_fetch_mails_from_gmail_empty(mocker: MockFixture) -> None:
-    mock_discovery = mocker.patch("danswer.connectors.gmail.connector.discovery")
+    mock_discovery = mocker.patch("backend.connectors.gmail.connector.discovery")
     mock_discovery.build.return_value.users.return_value.messages.return_value.list.return_value.execute.return_value = {
         "messages": []
     }
@@ -106,7 +106,7 @@ def test_fetch_mails_from_gmail_empty(mocker: MockFixture) -> None:
 
 
 def test_fetch_mails_from_gmail(mocker: MockFixture) -> None:
-    mock_discovery = mocker.patch("danswer.connectors.gmail.connector.discovery")
+    mock_discovery = mocker.patch("backend.connectors.gmail.connector.discovery")
     email_id = "18cabedb1ea46b03"
     email_subject = "Danswer Test Subject"
     email_sender = "Google <no-reply@accounts.google.com>"

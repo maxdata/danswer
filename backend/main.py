@@ -210,7 +210,7 @@ def get_application() -> FastAPI:
     @application.on_event("startup")
     def startup_event() -> None:
         verify_auth = fetch_versioned_implementation(
-            "danswer.auth.users", "verify_auth_setting"
+            "backend.auth.users", "verify_auth_setting"
         )
         # Will throw exception if an issue is found
         verify_auth()

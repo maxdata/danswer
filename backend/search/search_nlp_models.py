@@ -17,12 +17,12 @@ from backend.configs.model_configs import DOCUMENT_ENCODER_MODEL
 from backend.configs.model_configs import INTENT_MODEL_VERSION
 from backend.configs.model_configs import QUERY_MAX_CONTEXT_SIZE
 from backend.utils.logger import setup_logger
-from shared_models.model_server_models import EmbedRequest
-from shared_models.model_server_models import EmbedResponse
-from shared_models.model_server_models import IntentRequest
-from shared_models.model_server_models import IntentResponse
-from shared_models.model_server_models import RerankRequest
-from shared_models.model_server_models import RerankResponse
+from backend.shared_models.model_server_models import EmbedRequest
+from backend.shared_models.model_server_models import EmbedResponse
+from backend.shared_models.model_server_models import IntentRequest
+from backend.shared_models.model_server_models import IntentResponse
+from backend.shared_models.model_server_models import RerankRequest
+from backend.shared_models.model_server_models import RerankResponse
 
 logger = setup_logger()
 # Remove useless info about layer initialization
