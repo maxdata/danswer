@@ -7,3 +7,4 @@
 .vscode/launch.json
 *.pyc
 __pycache__
+storage

@@ -11,7 +11,6 @@ import { unstable_noStore as noStore } from "next/cache";
 import { Persona } from "../admin/personas/interfaces";
 import { InstantSSRAutoRefresh } from "@/components/SSRAutoRefresh";
 import { WelcomeModal } from "@/components/WelcomeModal";
-import { ApiKeyModal } from "@/components/openai/ApiKeyModal";
 import { cookies } from "next/headers";
 import { DOCUMENT_SIDEBAR_WIDTH_COOKIE_NAME } from "@/components/resizable/contants";
 import { personaComparator } from "../admin/personas/lib";
@@ -20,7 +19,7 @@ import {
   EmbeddingModelResponse,
   checkModelNameIsValid,
 } from "../admin/models/embedding/embeddingModels";
-import { SwitchModelModal } from "@/components/SwitchModelModal";
+
 
 export default async function Page({
   searchParams,
@@ -36,8 +35,7 @@ export default async function Page({
     fetchSS("/manage/document-set"),
     fetchSS("/persona?include_default=true"),
     fetchSS("/chat/get-user-chat-sessions"),
-    fetchSS("/query/valid-tags"),
-    fetchSS("/secondary-index/get-current-embedding-model"),
+    fetchSS("/query/valid-tags"),    
   ];
 
   // catch cases where the backend is completely unreachable here
@@ -143,15 +141,12 @@ export default async function Page({
 
   return (
     <>
-      <InstantSSRAutoRefresh />
-      <ApiKeyModal />
+      <InstantSSRAutoRefresh />      
 
       {connectors.length === 0 ? (
         <WelcomeModal embeddingModelName={embeddingModelName} />
       ) : (
-        !checkModelNameIsValid(embeddingModelName) && (
-          <SwitchModelModal embeddingModelName={embeddingModelName} />
-        )
+        !checkModelNameIsValid(embeddingModelName) 
       )}
 
       <ChatLayout

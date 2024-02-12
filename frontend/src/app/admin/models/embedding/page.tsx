@@ -31,24 +31,7 @@ function Main() {
   const [showAddConnectorPopup, setShowAddConnectorPopup] =
     useState<boolean>(false);
 
-  const {
-    data: currentEmeddingModel,
-    isLoading: isLoadingCurrentModel,
-    error: currentEmeddingModelError,
-  } = useSWR<EmbeddingModelResponse>(
-    "/api/secondary-index/get-current-embedding-model",
-    errorHandlingFetcher,
-    { refreshInterval: 5000 } // 5 seconds
-  );
-  const {
-    data: futureEmeddingModel,
-    isLoading: isLoadingFutureModel,
-    error: futureEmeddingModelError,
-  } = useSWR<EmbeddingModelResponse>(
-    "/api/secondary-index/get-secondary-embedding-model",
-    errorHandlingFetcher,
-    { refreshInterval: 5000 } // 5 seconds
-  );
+  
   const {
     data: ongoingReIndexingStatus,
     isLoading: isLoadingOngoingReIndexingStatus,
@@ -63,38 +46,14 @@ function Main() {
     { refreshInterval: 5000 } // 5 seconds
   );
 
-  const onSelect = async (modelName: string) => {
-    if (currentEmeddingModel?.model_name === INVALID_OLD_MODEL) {
-      await onConfirm(modelName);
-    } else {
-      setTentativeNewEmbeddingModel(modelName);
-    }
+  const onSelect = async (modelName: string) => {    
+    setTentativeNewEmbeddingModel(modelName);    
   };
 
   const onConfirm = async (modelName: string) => {
     const modelDescriptor = AVAILABLE_MODELS.find(
       (model) => model.model_name === modelName
     );
-
-    const response = await fetch(
-      "/api/secondary-index/set-new-embedding-model",
-      {
-        method: "POST",
-        body: JSON.stringify(modelDescriptor),
-        headers: {
-          "Content-Type": "application/json",
-        },
-      }
-    );
-    if (response.ok) {
-      setTentativeNewEmbeddingModel(null);
-      mutate("/api/secondary-index/get-secondary-embedding-model");
-      if (!connectors || !connectors.length) {
-        setShowAddConnectorPopup(true);
-      }
-    } else {
-      alert(`Failed to update embedding model - ${await response.text()}`);
-    }
   };
 
   const onCancel = async () => {
@@ -113,17 +72,8 @@ function Main() {
     setIsCancelling(false);
   };
 
-  if (isLoadingCurrentModel || isLoadingFutureModel) {
+  if (true) {
     return <ThreeDotsLoader />;
-  }
-
-  if (
-    currentEmeddingModelError ||
-    !currentEmeddingModel ||
-    futureEmeddingModelError ||
-    !futureEmeddingModel
-  ) {
-    return <ErrorCallout errorTitle="Failed to fetch embedding model status" />;
   }
 
   const currentModelName = currentEmeddingModel.model_name;

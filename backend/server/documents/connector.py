@@ -13,34 +13,6 @@ from backend.auth.users import current_user
 from backend.background.celery.celery_utils import get_deletion_status
 from backend.configs.constants import DocumentSource
 from backend.connectors.file.utils import write_temp_files
-from backend.connectors.gmail.connector_auth import delete_gmail_service_account_key
-from backend.connectors.gmail.connector_auth import delete_google_app_gmail_cred
-from backend.connectors.gmail.connector_auth import get_gmail_auth_url
-from backend.connectors.gmail.connector_auth import get_gmail_service_account_key
-from backend.connectors.gmail.connector_auth import get_google_app_gmail_cred
-from backend.connectors.gmail.connector_auth import (
-    update_gmail_credential_access_tokens,
-)
-from backend.connectors.gmail.connector_auth import (
-    upsert_gmail_service_account_key,
-)
-from backend.connectors.gmail.connector_auth import upsert_google_app_gmail_cred
-from backend.connectors.google_drive.connector_auth import build_service_account_creds
-from backend.connectors.google_drive.connector_auth import delete_google_app_cred
-from backend.connectors.google_drive.connector_auth import delete_service_account_key
-from backend.connectors.google_drive.connector_auth import get_auth_url
-from backend.connectors.google_drive.connector_auth import get_google_app_cred
-from backend.connectors.google_drive.connector_auth import (
-    get_google_drive_creds_for_authorized_user,
-)
-from backend.connectors.google_drive.connector_auth import get_service_account_key
-from backend.connectors.google_drive.connector_auth import (
-    update_credential_access_tokens,
-)
-from backend.connectors.google_drive.connector_auth import upsert_google_app_cred
-from backend.connectors.google_drive.connector_auth import upsert_service_account_key
-from backend.connectors.google_drive.connector_auth import verify_csrf
-from backend.connectors.google_drive.constants import DB_CREDENTIALS_DICT_TOKEN_KEY
 from backend.db.connector import create_connector
 from backend.db.connector import delete_connector
 from backend.db.connector import fetch_connector_by_id
@@ -49,8 +21,6 @@ from backend.db.connector import get_connector_credential_ids
 from backend.db.connector import update_connector
 from backend.db.connector_credential_pair import get_connector_credential_pairs
 from backend.db.credentials import create_credential
-from backend.db.credentials import delete_gmail_service_account_credentials
-from backend.db.credentials import delete_google_drive_service_account_credentials
 from backend.db.credentials import fetch_credential_by_id
 from backend.db.deletion_attempt import check_deletion_attempt_is_allowed
 from backend.db.document import get_document_cnts_for_cc_pairs
@@ -71,11 +41,6 @@ from backend.server.documents.models import ConnectorIndexingStatus
 from backend.server.documents.models import ConnectorSnapshot
 from backend.server.documents.models import CredentialSnapshot
 from backend.server.documents.models import FileUploadResponse
-from backend.server.documents.models import GDriveCallback
-from backend.server.documents.models import GmailCallback
-from backend.server.documents.models import GoogleAppCredentials
-from backend.server.documents.models import GoogleServiceAccountCredentialRequest
-from backend.server.documents.models import GoogleServiceAccountKey
 from backend.server.documents.models import IndexAttemptSnapshot
 from backend.server.documents.models import ObjectCreationIdResponse
 from backend.server.documents.models import RunConnectorRequest
@@ -89,248 +54,6 @@ router = APIRouter(prefix="/manage")
 
 
 """Admin only API endpoints"""
-
-
-@router.get("/admin/connector/gmail/app-credential")
-def check_google_app_gmail_credentials_exist(
-    _: User = Depends(current_admin_user),
-) -> dict[str, str]:
-    try:
-        return {"client_id": get_google_app_gmail_cred().web.client_id}
-    except ConfigNotFoundError:
-        raise HTTPException(status_code=404, detail="Google App Credentials not found")
-
-
-@router.put("/admin/connector/gmail/app-credential")
-def upsert_google_app_gmail_credentials(
-    app_credentials: GoogleAppCredentials, _: User = Depends(current_admin_user)
-) -> StatusResponse:
-    try:
-        upsert_google_app_gmail_cred(app_credentials)
-    except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
-
-    return StatusResponse(
-        success=True, message="Successfully saved Google App Credentials"
-    )
-
-
-@router.delete("/admin/connector/gmail/app-credential")
-def delete_google_app_gmail_credentials(
-    _: User = Depends(current_admin_user),
-) -> StatusResponse:
-    try:
-        delete_google_app_gmail_cred()
-    except ConfigNotFoundError as e:
-        raise HTTPException(status_code=400, detail=str(e))
-
-    return StatusResponse(
-        success=True, message="Successfully deleted Google App Credentials"
-    )
-
-
-@router.get("/admin/connector/google-drive/app-credential")
-def check_google_app_credentials_exist(
-    _: User = Depends(current_admin_user),
-) -> dict[str, str]:
-    try:
-        return {"client_id": get_google_app_cred().web.client_id}
-    except ConfigNotFoundError:
-        raise HTTPException(status_code=404, detail="Google App Credentials not found")
-
-
-@router.put("/admin/connector/google-drive/app-credential")
-def upsert_google_app_credentials(
-    app_credentials: GoogleAppCredentials, _: User = Depends(current_admin_user)
-) -> StatusResponse:
-    try:
-        upsert_google_app_cred(app_credentials)
-    except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
-
-    return StatusResponse(
-        success=True, message="Successfully saved Google App Credentials"
-    )
-
-
-@router.delete("/admin/connector/google-drive/app-credential")
-def delete_google_app_credentials(
-    _: User = Depends(current_admin_user),
-) -> StatusResponse:
-    try:
-        delete_google_app_cred()
-    except ConfigNotFoundError as e:
-        raise HTTPException(status_code=400, detail=str(e))
-
-    return StatusResponse(
-        success=True, message="Successfully deleted Google App Credentials"
-    )
-
-
-@router.get("/admin/connector/gmail/service-account-key")
-def check_google_service_gmail_account_key_exist(
-    _: User = Depends(current_admin_user),
-) -> dict[str, str]:
-    try:
-        return {"service_account_email": get_gmail_service_account_key().client_email}
-    except ConfigNotFoundError:
-        raise HTTPException(
-            status_code=404, detail="Google Service Account Key not found"
-        )
-
-
-@router.put("/admin/connector/gmail/service-account-key")
-def upsert_google_service_gmail_account_key(
-    service_account_key: GoogleServiceAccountKey, _: User = Depends(current_admin_user)
-) -> StatusResponse:
-    try:
-        upsert_gmail_service_account_key(service_account_key)
-    except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
-
-    return StatusResponse(
-        success=True, message="Successfully saved Google Service Account Key"
-    )
-
-
-@router.delete("/admin/connector/gmail/service-account-key")
-def delete_google_service_gmail_account_key(
-    _: User = Depends(current_admin_user),
-) -> StatusResponse:
-    try:
-        delete_gmail_service_account_key()
-    except ConfigNotFoundError as e:
-        raise HTTPException(status_code=400, detail=str(e))
-
-    return StatusResponse(
-        success=True, message="Successfully deleted Google Service Account Key"
-    )
-
-
-@router.get("/admin/connector/google-drive/service-account-key")
-def check_google_service_account_key_exist(
-    _: User = Depends(current_admin_user),
-) -> dict[str, str]:
-    try:
-        return {"service_account_email": get_service_account_key().client_email}
-    except ConfigNotFoundError:
-        raise HTTPException(
-            status_code=404, detail="Google Service Account Key not found"
-        )
-
-
-@router.put("/admin/connector/google-drive/service-account-key")
-def upsert_google_service_account_key(
-    service_account_key: GoogleServiceAccountKey, _: User = Depends(current_admin_user)
-) -> StatusResponse:
-    try:
-        upsert_service_account_key(service_account_key)
-    except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
-
-    return StatusResponse(
-        success=True, message="Successfully saved Google Service Account Key"
-    )
-
-
-@router.delete("/admin/connector/google-drive/service-account-key")
-def delete_google_service_account_key(
-    _: User = Depends(current_admin_user),
-) -> StatusResponse:
-    try:
-        delete_service_account_key()
-    except ConfigNotFoundError as e:
-        raise HTTPException(status_code=400, detail=str(e))
-
-    return StatusResponse(
-        success=True, message="Successfully deleted Google Service Account Key"
-    )
-
-
-@router.put("/admin/connector/google-drive/service-account-credential")
-def upsert_service_account_credential(
-    service_account_credential_request: GoogleServiceAccountCredentialRequest,
-    user: User | None = Depends(current_admin_user),
-    db_session: Session = Depends(get_session),
-) -> ObjectCreationIdResponse:
-    """Special API which allows the creation of a credential for a service account.
-    Combines the input with the saved service account key to create an entry in the
-    `Credential` table."""
-    try:
-        credential_base = build_service_account_creds(
-            delegated_user_email=service_account_credential_request.google_drive_delegated_user
-        )
-    except ConfigNotFoundError as e:
-        raise HTTPException(status_code=400, detail=str(e))
-
-    # first delete all existing service account credentials
-    delete_google_drive_service_account_credentials(user, db_session)
-    # `user=None` since this credential is not a personal credential
-    credential = create_credential(
-        credential_data=credential_base, user=user, db_session=db_session
-    )
-    return ObjectCreationIdResponse(id=credential.id)
-
-
-@router.put("/admin/connector/gmail/service-account-credential")
-def upsert_gmail_service_account_credential(
-    service_account_credential_request: GoogleServiceAccountCredentialRequest,
-    user: User | None = Depends(current_admin_user),
-    db_session: Session = Depends(get_session),
-) -> ObjectCreationIdResponse:
-    """Special API which allows the creation of a credential for a service account.
-    Combines the input with the saved service account key to create an entry in the
-    `Credential` table."""
-    try:
-        credential_base = build_service_account_creds(
-            delegated_user_email=service_account_credential_request.gmail_delegated_user
-        )
-    except ConfigNotFoundError as e:
-        raise HTTPException(status_code=400, detail=str(e))
-
-    # first delete all existing service account credentials
-    delete_gmail_service_account_credentials(user, db_session)
-    # `user=None` since this credential is not a personal credential
-    credential = create_credential(
-        credential_data=credential_base, user=user, db_session=db_session
-    )
-    return ObjectCreationIdResponse(id=credential.id)
-
-
-@router.get("/admin/connector/google-drive/check-auth/{credential_id}")
-def check_drive_tokens(
-    credential_id: int,
-    user: User = Depends(current_admin_user),
-    db_session: Session = Depends(get_session),
-) -> AuthStatus:
-    db_credentials = fetch_credential_by_id(credential_id, user, db_session)
-    if (
-        not db_credentials
-        or DB_CREDENTIALS_DICT_TOKEN_KEY not in db_credentials.credential_json
-    ):
-        return AuthStatus(authenticated=False)
-    token_json_str = str(db_credentials.credential_json[DB_CREDENTIALS_DICT_TOKEN_KEY])
-    google_drive_creds = get_google_drive_creds_for_authorized_user(
-        token_json_str=token_json_str
-    )
-    if google_drive_creds is None:
-        return AuthStatus(authenticated=False)
-    return AuthStatus(authenticated=True)
-
-
-@router.get("/admin/connector/google-drive/authorize/{credential_id}")
-def admin_google_drive_auth(
-    response: Response, credential_id: str, _: User = Depends(current_admin_user)
-) -> AuthUrl:
-    # set a cookie that we can read in the callback (used for `verify_csrf`)
-    response.set_cookie(
-        key=_GOOGLE_DRIVE_CREDENTIAL_ID_COOKIE_NAME,
-        value=credential_id,
-        httponly=True,
-        max_age=600,
-    )
-    return AuthUrl(auth_url=get_auth_url(credential_id=int(credential_id)))
-
 
 @router.post("/admin/connector/file/upload")
 def upload_files(
@@ -546,19 +269,6 @@ def connector_run_once(
         if credential_id not in skipped_credentials
     ]
 
-    if secondary_embedding_model is not None:
-        # Secondary index doesn't have to be returned
-        [
-            create_index_attempt(
-                run_info.connector_id,
-                credential_id,
-                secondary_embedding_model.id,
-                db_session,
-            )
-            for credential_id in credential_ids
-            if credential_id not in skipped_credentials
-        ]
-
     if not index_attempt_ids:
         raise HTTPException(
             status_code=400,
@@ -573,87 +283,6 @@ def connector_run_once(
 
 
 """Endpoints for basic users"""
-
-
-@router.get("/connector/gmail/authorize/{credential_id}")
-def gmail_auth(
-    response: Response, credential_id: str, _: User = Depends(current_user)
-) -> AuthUrl:
-    # set a cookie that we can read in the callback (used for `verify_csrf`)
-    response.set_cookie(
-        key=_GMAIL_CREDENTIAL_ID_COOKIE_NAME,
-        value=credential_id,
-        httponly=True,
-        max_age=600,
-    )
-    return AuthUrl(auth_url=get_gmail_auth_url(int(credential_id)))
-
-
-@router.get("/connector/google-drive/authorize/{credential_id}")
-def google_drive_auth(
-    response: Response, credential_id: str, _: User = Depends(current_user)
-) -> AuthUrl:
-    # set a cookie that we can read in the callback (used for `verify_csrf`)
-    response.set_cookie(
-        key=_GOOGLE_DRIVE_CREDENTIAL_ID_COOKIE_NAME,
-        value=credential_id,
-        httponly=True,
-        max_age=600,
-    )
-    return AuthUrl(auth_url=get_auth_url(int(credential_id)))
-
-
-@router.get("/connector/gmail/callback")
-def gmail_callback(
-    request: Request,
-    callback: GmailCallback = Depends(),
-    user: User = Depends(current_user),
-    db_session: Session = Depends(get_session),
-) -> StatusResponse:
-    credential_id_cookie = request.cookies.get(_GMAIL_CREDENTIAL_ID_COOKIE_NAME)
-    if credential_id_cookie is None or not credential_id_cookie.isdigit():
-        raise HTTPException(
-            status_code=401, detail="Request did not pass CSRF verification."
-        )
-    credential_id = int(credential_id_cookie)
-    verify_csrf(credential_id, callback.state)
-    if (
-        update_gmail_credential_access_tokens(
-            callback.code, credential_id, user, db_session
-        )
-        is None
-    ):
-        raise HTTPException(
-            status_code=500, detail="Unable to fetch Gmail access tokens"
-        )
-
-    return StatusResponse(success=True, message="Updated Gmail access tokens")
-
-
-@router.get("/connector/google-drive/callback")
-def google_drive_callback(
-    request: Request,
-    callback: GDriveCallback = Depends(),
-    user: User = Depends(current_user),
-    db_session: Session = Depends(get_session),
-) -> StatusResponse:
-    credential_id_cookie = request.cookies.get(_GOOGLE_DRIVE_CREDENTIAL_ID_COOKIE_NAME)
-    if credential_id_cookie is None or not credential_id_cookie.isdigit():
-        raise HTTPException(
-            status_code=401, detail="Request did not pass CSRF verification."
-        )
-    credential_id = int(credential_id_cookie)
-    verify_csrf(credential_id, callback.state)
-    if (
-        update_credential_access_tokens(callback.code, credential_id, user, db_session)
-        is None
-    ):
-        raise HTTPException(
-            status_code=500, detail="Unable to fetch Google Drive access tokens"
-        )
-
-    return StatusResponse(success=True, message="Updated Google Drive access tokens")
-
 
 @router.get("/connector")
 def get_connectors(

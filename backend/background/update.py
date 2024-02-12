@@ -150,10 +150,7 @@ def create_indexing_jobs(existing_jobs: dict[int, SimpleJob]) -> None:
             )
 
         embedding_models = [get_current_db_embedding_model(db_session)]
-        secondary_embedding_model = get_secondary_db_embedding_model(db_session)
-        if secondary_embedding_model is not None:
-            embedding_models.append(secondary_embedding_model)
-
+        
         all_connectors = fetch_connectors(db_session)
         for connector in all_connectors:
             for association in connector.credentials:
@@ -167,10 +164,11 @@ def create_indexing_jobs(existing_jobs: dict[int, SimpleJob]) -> None:
                     last_attempt = get_last_attempt(
                         connector.id, credential.id, model.id, db_session
                     )
-                    if not _should_create_new_indexing(
-                        connector, last_attempt, model, db_session
-                    ):
-                        continue
+                    
+                    # if not _should_create_new_indexing(
+                    #     connector, last_attempt, model, db_session
+                    # ):
+                    #     continue
 
                     create_index_attempt(
                         connector.id, credential.id, model.id, db_session
@@ -285,11 +283,7 @@ def kickoff_indexing_jobs(
         return existing_jobs
 
     for attempt, embedding_model in new_indexing_attempts:
-        use_secondary_index = (
-            embedding_model.status == IndexModelStatus.FUTURE
-            if embedding_model is not None
-            else False
-        )
+        
         if attempt.connector is None:
             logger.warning(
                 f"Skipping index attempt as Connector has been deleted: {attempt}"
@@ -309,17 +303,13 @@ def kickoff_indexing_jobs(
                 )
             continue
 
-        if use_secondary_index:
-            run = secondary_client.submit(
-                run_indexing_entrypoint, attempt.id, _get_num_threads(), pure=False
-            )
-        else:
-            run = client.submit(
-                run_indexing_entrypoint, attempt.id, _get_num_threads(), pure=False
-            )
+        
+        run = client.submit(
+            run_indexing_entrypoint, attempt.id, _get_num_threads(), pure=False
+        )
 
         if run:
-            secondary_str = "(secondary index) " if use_secondary_index else ""
+            secondary_str = ""
             logger.info(
                 f"Kicked off {secondary_str}"
                 f"indexing attempt for connector: '{attempt.connector.name}', "

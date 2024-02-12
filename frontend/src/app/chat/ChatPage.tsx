@@ -8,7 +8,6 @@ import { DocumentSet, Tag, User, ValidSources } from "@/lib/types";
 import { Persona } from "../admin/personas/interfaces";
 import { Header } from "@/components/Header";
 import { HealthCheckBanner } from "@/components/health/healthcheck";
-import { ApiKeyModal } from "@/components/openai/ApiKeyModal";
 import { InstantSSRAutoRefresh } from "@/components/SSRAutoRefresh";
 
 export function ChatLayout({
@@ -43,8 +42,7 @@ export function ChatLayout({
       <div className="absolute top-0 z-40 w-full">
         <Header user={user} />
       </div>
-      <HealthCheckBanner />
-      <ApiKeyModal />
+      <HealthCheckBanner />      
       <InstantSSRAutoRefresh />
 
       <div className="flex relative bg-background text-default overflow-x-hidden">

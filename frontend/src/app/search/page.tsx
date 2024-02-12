@@ -7,7 +7,6 @@ import {
 } from "@/lib/userSS";
 import { redirect } from "next/navigation";
 import { HealthCheckBanner } from "@/components/health/healthcheck";
-import { ApiKeyModal } from "@/components/openai/ApiKeyModal";
 import { fetchSS } from "@/lib/utilsSS";
 import { Connector, DocumentSet, Tag, User, ValidSources } from "@/lib/types";
 import { cookies } from "next/headers";
@@ -18,7 +17,6 @@ import { unstable_noStore as noStore } from "next/cache";
 import { InstantSSRAutoRefresh } from "@/components/SSRAutoRefresh";
 import { personaComparator } from "../admin/personas/lib";
 import { checkModelNameIsValid } from "../admin/models/embedding/embeddingModels";
-import { SwitchModelModal } from "@/components/SwitchModelModal";
 
 export default async function Home() {
   // Disable caching so we always get the up to date connector / document set / persona info
@@ -32,8 +30,7 @@ export default async function Home() {
     fetchSS("/manage/connector"),
     fetchSS("/manage/document-set"),
     fetchSS("/persona"),
-    fetchSS("/query/valid-tags"),
-    fetchSS("/secondary-index/get-current-embedding-model"),
+    fetchSS("/query/valid-tags"),    
   ];
 
   // catch cases where the backend is completely unreachable here
@@ -124,16 +121,13 @@ export default async function Home() {
       <Header user={user} />
       <div className="m-3">
         <HealthCheckBanner />
-      </div>
-      <ApiKeyModal />
+      </div>      
       <InstantSSRAutoRefresh />
 
       {connectors.length === 0 ? (
         <WelcomeModal embeddingModelName={embeddingModelName} />
       ) : (
-        !checkModelNameIsValid(embeddingModelName) && (
-          <SwitchModelModal embeddingModelName={embeddingModelName} />
-        )
+        !checkModelNameIsValid(embeddingModelName) 
       )}
 
       <div className="px-24 pt-10 flex flex-col items-center min-h-screen">

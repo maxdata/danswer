@@ -56,7 +56,7 @@ def fetch_connector_by_id(connector_id: int, db_session: Session) -> Connector |
 
 def fetch_ingestion_connector_by_name(
     connector_name: str, db_session: Session
-) -> Connector | None:
+) -> Connector | None: 
     stmt = (
         select(Connector)
         .where(Connector.name == connector_name)
@@ -244,7 +244,7 @@ def create_initial_default_connector(db_session: Session) -> None:
             default_connector.source != DocumentSource.INGESTION_API
             or default_connector.input_type != InputType.LOAD_STATE
             or default_connector.refresh_freq is not None
-            or default_connector.disabled
+            # or default_connector.disabled
         ):
             raise ValueError(
                 "DB is not in a valid initial state. "
