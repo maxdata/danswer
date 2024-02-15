@@ -6,7 +6,6 @@ from pydantic import validator
 
 from backend.auth.schemas import UserRole
 from backend.configs.constants import AuthType
-from backend.danswerbot.slack.config import VALID_SLACK_FILTERS
 from backend.db.models import AllowedAnswerFilters
 from backend.db.models import ChannelConfig
 from backend.server.features.persona.models import PersonaSnapshot

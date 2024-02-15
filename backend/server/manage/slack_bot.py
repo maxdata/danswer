@@ -4,9 +4,6 @@ from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
 from backend.auth.users import current_admin_user
-from backend.danswerbot.slack.config import validate_channel_names
-from backend.danswerbot.slack.tokens import fetch_tokens
-from backend.danswerbot.slack.tokens import save_tokens
 from backend.db.chat import get_persona_by_id
 from backend.db.constants import SLACK_BOT_PERSONA_PREFIX
 from backend.db.engine import get_session
